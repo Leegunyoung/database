@@ -2,34 +2,23 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
 public class DB {
     private static final String url = "jdbc:mysql://localhost:3306/mydb?serverTimeZone=UTC";
     private static final String user = "root";
-    private static final String password = "llgy88388!"; // 사용자 비밀번호
-    private static boolean foreignKeyConstraintsAdded = false;
+    private static final String password = "llgy88388!";
     private static JFrame jframe = new JFrame();
     private static String[] rangeOptions = {"전체", "부서", "성별", "연봉"};
+    private static boolean foreignKeyConstraintsAdded = false;
     private static String[][] rangeOptionsDetail = {
             {"Research", "Administration", "Headquarters"},
             {"M", "F"}
+
     };
 
-    private static JCheckBox op1 = new JCheckBox("선택", true);
-    private static JCheckBox op2 = new JCheckBox("Name", true);
-    private static JCheckBox op3 = new JCheckBox("Ssn", true);
-    private static JCheckBox op4 = new JCheckBox("Bdate", true);
-    private static JCheckBox op5 = new JCheckBox("Address", true);
-    private static JCheckBox op6 = new JCheckBox("Sex", true);
-    private static JCheckBox op7 = new JCheckBox("Salary", true);
-    private static JCheckBox op8 = new JCheckBox("Supervisor", true);
-    private static JCheckBox op9 = new JCheckBox("Department", true);
-    private static JButton search = new JButton("검색");
+    private static JTable table;
+
 
     public static void main(String[] args) {
         try (Connection conn = getConnection()) {
@@ -44,212 +33,83 @@ public class DB {
         }
     }
 
-    public static void processUserRequests(Connection conn) {
-        // 사용자로부터 요청을 처리할 함수들
-        try {
-            //listAllEmployees(conn);
-            //searchEmployee(conn);
-            deleteEmployee(conn);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    private static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(url, user, password);
     }
 
-    public static Connection getConnection() throws SQLException {
-        Connection conn = DriverManager.getConnection(url, user, password);
-        Statement stmt = conn.createStatement();
 
-        JPanel panel1 = new JPanel();
-        JPanel panel2 = new JPanel();
-        JPanel panel3 = new JPanel();
+    private static void processUserRequests(Connection conn) {
+        jframe.setTitle("Employee Manager");
+        jframe.setSize(1000, 700);
+        jframe.setLayout(new BorderLayout());
 
-        panel1.setLayout(new FlowLayout(FlowLayout.LEFT));
-        panel2.setLayout(new FlowLayout(FlowLayout.LEFT));
-        panel1.add(new JLabel("검색 범위"));
-        JComboBox<String> searchRange = new JComboBox<>(rangeOptions);
-        JComboBox<String> searchRangeDetail = new JComboBox<>(rangeOptionsDetail[0]);
-        searchRangeDetail.setEnabled(false);
-        searchRangeDetail.setVisible(false);
-        JTextField salaryTextField = new JTextField(10);
-        salaryTextField.setVisible(false);
-
-        searchRange.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int idx = searchRange.getSelectedIndex();
-                if (idx == 0) {
-                    searchRangeDetail.setEnabled(false);
-                    searchRangeDetail.setVisible(false);
-                    salaryTextField.setVisible(false);
-                } else if (idx == 3) {
-                    searchRangeDetail.setEnabled(false);
-                    searchRangeDetail.setVisible(false);
-                    salaryTextField.setVisible(true);
+        // Table
+        String[] columnNames = {"선택", "Name", "Ssn", "Bdate", "Address", "Sex", "Salary", "Supervisor", "Department"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
+            public Class<?> getColumnClass(int column) {
+                if (column == 0) {
+                    return Boolean.class;
                 } else {
-                    searchRangeDetail.setModel(new DefaultComboBoxModel<>(rangeOptionsDetail[idx - 1]));
-                    searchRangeDetail.setEnabled(true);
-                    searchRangeDetail.setVisible(true);
-                    salaryTextField.setVisible(false);
+                    return String.class;
                 }
+            }
+        };
+        table = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(table);
+        jframe.add(scrollPane, BorderLayout.CENTER);
+
+        // Search Panel
+        JPanel searchPanel = new JPanel(new FlowLayout());
+        JComboBox<String> rangeComboBox = new JComboBox<>(rangeOptions);
+        JComboBox<String> rangeDetailComboBox = new JComboBox<>();
+        searchPanel.add(new JLabel("검색 범위:"));
+        searchPanel.add(rangeComboBox);
+        searchPanel.add(rangeDetailComboBox);
+
+        // Update range detail options dynamically
+        rangeComboBox.addActionListener(e -> {
+            rangeDetailComboBox.removeAllItems();
+            switch (rangeComboBox.getSelectedIndex()) {
+                case 1:  // 부서
+                    for (String s : rangeOptionsDetail[0]) rangeDetailComboBox.addItem(s);
+                    break;
+                case 2:  // 성별
+                    for (String s : rangeOptionsDetail[1]) rangeDetailComboBox.addItem(s);
+                    break;
+                default:
+                    break;
             }
         });
 
-        panel1.add(searchRange);
-        panel1.add(searchRangeDetail);
-        panel1.add(salaryTextField);
-        panel2.add(new JLabel("검색 항목"));
-
-        search.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String header[] = {"선택", "Name", "Ssn", "Bdate", "Address", "Sex", "Salary", "Supervisor", "Department"};
-                DefaultTableModel tableModel = new DefaultTableModel(header, 0);
-
-                StringBuilder sql = new StringBuilder("SELECT ");
-                boolean anySelected = false;
-
-                if (op2.isSelected()) {
-                    sql.append("e.fname, ");
-                    anySelected = true;
-                }
-                if (op3.isSelected()) {
-                    sql.append("e.ssn, ");
-                    anySelected = true;
-                }
-                if (op4.isSelected()) {
-                    sql.append("e.bdate, ");
-                    anySelected = true;
-                }
-                if (op5.isSelected()) {
-                    sql.append("e.address, ");
-                    anySelected = true;
-                }
-                if (op6.isSelected()) {
-                    sql.append("e.sex, ");
-                    anySelected = true;
-                }
-                if (op7.isSelected()) {
-                    sql.append("e.salary, ");
-                    anySelected = true;
-                }
-                if (op8.isSelected()) {
-                    sql.append("e.super_ssn, ");
-                    anySelected = true;
-                }
-                if (op9.isSelected()) {
-                    sql.append("d.dname, ");
-                    anySelected = true;
-                }
-
-                // Remove the trailing comma and add the rest of the SQL query
-                if (anySelected) {
-                    sql.setLength(sql.length() - 2); // Remove the last ", "
-                    sql.append(" FROM EMPLOYEE e INNER JOIN DEPARTMENT d ON e.dno = d.dnumber");
-                } else {
-                    // If no columns are selected, select all columns
-                    sql.append(" * "); // Select all columns
-                    sql.append(" FROM EMPLOYEE e INNER JOIN DEPARTMENT d ON e.dno = d.dnumber");
-                }
-
-                String fname = ""; // Initialize with an empty string
-                String ssn = "";
-                String bdate = "";
-                String addr = "";
-                String sex = "";
-                double salary = 0.0; // Initialize with a default value
-                String super_emp = "";
-                String dept = "";
-                try (ResultSet rs = stmt.executeQuery(sql.toString())) {
-                    while (rs.next()) {
-
-                        int columnIndex = 0;
-
-                        if (op2.isSelected()) {
-                            fname = rs.getString(++columnIndex);
-                        }
-                        if (op3.isSelected()) {
-                            ssn = rs.getString(++columnIndex);
-                        }
-                        if (op4.isSelected()) {
-                            bdate = rs.getString(++columnIndex);
-                        }
-                        if (op5.isSelected()) {
-                            addr = rs.getString(++columnIndex);
-                        }
-                        if (op6.isSelected()) {
-                            sex = rs.getString(++columnIndex);
-                        }
-                        if (op7.isSelected()) {
-                            salary = rs.getDouble(++columnIndex);
-                        }
-                        if (op8.isSelected()) {
-                            super_emp = rs.getString(++columnIndex);
-                        }
-                        if (op9.isSelected()) {
-                            dept = rs.getString(++columnIndex);
-                        }
-
-                        System.out.printf("%s / %s / %s / %s / %s / %f / %s / %s\n", fname, ssn, bdate, addr, sex, salary, super_emp, dept);
-
-                        // Create an array for each row of data
-                        String[] row = new String[9];  // 9 columns
-
-                        // Check if each checkbox is selected and add the corresponding data to the row
-                        if (op2.isSelected()) row[1] = fname;
-                        if (op3.isSelected()) row[2] = ssn;
-                        if (op4.isSelected()) row[3] = bdate;
-                        if (op5.isSelected()) row[4] = addr;
-                        if (op6.isSelected()) row[5] = sex;
-                        if (op7.isSelected()) row[6] = String.valueOf(salary);
-                        if (op8.isSelected()) row[7] = super_emp;
-                        if (op9.isSelected()) row[8] = dept;
-
-                        // Add the row to the DefaultTableModel
-                        tableModel.addRow(row);
-                    }
-                } catch (SQLException e1) {
-                    e1.printStackTrace();
-                }
-                JTable jtable = new JTable(tableModel);
-                JScrollPane scrollpane = new JScrollPane(jtable);
-                scrollpane.setPreferredSize(new Dimension(1200, 500));
-                JPanel panel4 = new JPanel();
-                panel4.add(scrollpane);
-                jframe.add(scrollpane, BorderLayout.CENTER);
-                jframe.revalidate();
-                jframe.repaint();
-            }
+        JButton searchBtn = new JButton("검색");
+        searchBtn.addActionListener(e -> {
+            // TODO: Implement search logic based on range and detail options
+            searchEmployees((String) rangeComboBox.getSelectedItem(), (String) rangeDetailComboBox.getSelectedItem());
         });
+        searchPanel.add(searchBtn);
+        jframe.add(searchPanel, BorderLayout.NORTH);
 
+        // Button Panel
+        JPanel btnPanel = new JPanel(new FlowLayout());
+        JButton deleteBtn = new JButton("삭제");
+        deleteBtn.addActionListener(e -> deleteSelectedEmployees(rangeComboBox, rangeDetailComboBox));
+        btnPanel.add(deleteBtn);
 
-        panel2.add(op2);
-        panel2.add(op3);
-        panel2.add(op4);
-        panel2.add(op5);
-        panel2.add(op6);
-        panel2.add(op7);
-        panel2.add(op8);
-        panel2.add(op9);
-        panel2.add(search);
+        JButton addBtn = new JButton("직원 추가");
+        addBtn.addActionListener(e -> {
+            // TODO: Implement add employee function
+            System.out.println("직원 추가 기능 구현 필요");
+        });
+        btnPanel.add(addBtn);
 
-        panel3.setLayout(new GridLayout(2, 1));
-        panel3.add(panel1);
-        panel3.add(panel2);
+        jframe.add(btnPanel, BorderLayout.SOUTH);
 
-        jframe.add(panel3, BorderLayout.NORTH);
-        jframe.setTitle("Employee Retrieve System");
-        jframe.setVisible(true);
-        jframe.setSize(1600, 900);
         jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jframe.setLocationRelativeTo(null);
-        jframe.setResizable(false);
-
-        return conn;
-    };
-
+        jframe.setVisible(true);
+    }
 
     public static void addForeignKeyConstraintWithCascade(Connection conn) {
+
         try (Statement stmt = conn.createStatement()) {
             String[] queries = {
                     "ALTER TABLE PROJECT ADD CONSTRAINT Dnum_fk FOREIGN KEY (Dnum) REFERENCES DEPARTMENT(Dnumber) ON DELETE CASCADE;",
@@ -261,58 +121,90 @@ public class DB {
                     "ALTER TABLE EMPLOYEE ADD CONSTRAINT EMPSUPERFK FOREIGN KEY (Super_ssn) REFERENCES EMPLOYEE(Ssn) ON DELETE CASCADE;",
                     "ALTER TABLE EMPLOYEE ADD CONSTRAINT EMPDNOFK FOREIGN KEY (Dno) REFERENCES DEPARTMENT(Dnumber) ON DELETE CASCADE;"
             };
-
             for (String query : queries) {
                 stmt.executeUpdate(query);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle exceptions as needed
+            System.out.println("fk-pk가 이미 설정되어있으니까 추가하려면 쿼리문에 추가하시면 됩니당!");
+            // 예외 처리
         }
     }
 
-    // 검색 조건을 입력 받아 조건을 만족하는 직원을 삭제합니다.
-    public static void deleteEmployee(Connection conn) throws SQLException {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("삭제할 직원의 조건을 다음줄에 입력하세요");
-        String deleteCondition = scanner.nextLine();
-
-        try (Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("SELECT Fname,Lname FROM EMPLOYEE WHERE " + deleteCondition);
-            List<String> deletedEmployees = new ArrayList<>();
-
-            // 삭제할 직원의 이름을 가져옵니다.
-            while (rs.next()) {
-                String fname = rs.getString("Fname") + " " + rs.getString("Lname");
-                deletedEmployees.add(fname);
-                System.out.println(fname);
+    private static void searchEmployees(String range, String detail) {
+        String query = "SELECT * FROM EMPLOYEE E LEFT JOIN DEPARTMENT D ON E.Dno = D.Dnumber";
+        if ("부서".equals(range)) {
+            query += " WHERE D.Dname = '" + detail + "'";
+        } else if ("성별".equals(range)) {
+            query += " WHERE E.Sex = '" + detail + "'";
+        }
+        try (Connection connection = DriverManager.getConnection(url, user, password);
+             Statement statement = connection.createStatement()) {
+            ResultSet resultSet = statement.executeQuery(query);
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            model.setRowCount(0);
+            while (resultSet.next()) {
+                model.addRow(new Object[]{
+                        false, resultSet.getString("Fname"), resultSet.getString("Ssn"), resultSet.getDate("Bdate").toString(),
+                        resultSet.getString("Address"), resultSet.getString("Sex"), resultSet.getDouble("Salary"),
+                        resultSet.getString("Super_ssn"), resultSet.getString("Dname")
+                });
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-            // 실제로 삭제된 직원 수 확인
-            int actualDeletedCount = deletedEmployees.size();
 
-            // 삭제된 직원 정보 출력
+    private static void deleteSelectedEmployees(JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
 
-            if (actualDeletedCount > 0) {
-                System.out.println("다음 직원이 삭제되었습니다:");
-                for (String employee : deletedEmployees) {
-                    System.out.println(employee);
+        for (int i = model.getRowCount() - 1; i >= 0; i--) {
+            Boolean isChecked = (Boolean) model.getValueAt(i, 0);
+
+            if (isChecked) {
+                String fname = (String) model.getValueAt(i, 1); // FNAME
+                String fullName = fname; // FNAME 변수만 fullName 변수에 할당
+                String ssn = (String) model.getValueAt(i, 2);
+
+                try (Connection connection = DriverManager.getConnection(url, user, password);
+                     PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM EMPLOYEE WHERE Ssn = ?")) {
+
+                    // Get related employees
+                    StringBuilder relatedEmployees = new StringBuilder();
+                    try (PreparedStatement relatedStmt = connection.prepareStatement("SELECT Fname, Lname FROM EMPLOYEE WHERE Super_ssn = ?")) {
+                        relatedStmt.setString(1, ssn);
+                        ResultSet resultSet = relatedStmt.executeQuery();
+                        while (resultSet.next()) {
+                            relatedEmployees.append(resultSet.getString("Fname")).append(" ").append(resultSet.getString("Lname")).append(", ");
+                        }
+                    }
+                    
+                    preparedStatement.setString(1, ssn);
+                    int rowsAffected = preparedStatement.executeUpdate();
+                    if (rowsAffected > 0) {
+                        model.removeRow(i);
+                        searchEmployees((String) rangeComboBox.getSelectedItem(), (String) rangeDetailComboBox.getSelectedItem());
+
+                        String message = fullName + "'employee 가 삭제 됩니다..";
+                        if (relatedEmployees.length() > 0) {
+                            message += "\npk-fk로 관련되서 삭제되는 employee들: " + relatedEmployees.substring(0, relatedEmployees.length() - 2);
+                        }
+                        System.out.println(message);
+
+                        // GUI message
+                        JOptionPane.showMessageDialog(jframe, message, "삭제 완료!", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
-            } else {
-                System.out.println("삭제된 직원이 없습니다.");
+                catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }
 
 
 }
-
-
-
-
-
-
-
-
-
 
