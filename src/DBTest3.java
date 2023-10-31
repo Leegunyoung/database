@@ -1,5 +1,3 @@
-
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -10,7 +8,7 @@ import java.util.List;
 public class DBTest3 {
     private static final String url = "jdbc:mysql://localhost:3306/EMPLOYEE?serverTimeZone=UTC";
     private static final String user = "root";
-    private static final String password = "zkzkfhxm22";
+    private static final String password = "1234";
     private static JFrame jframe = new JFrame();
     private static String[] rangeOptions = {"전체", "부서", "성별", "연봉"};
     private static boolean foreignKeyConstraintsAdded = false;
