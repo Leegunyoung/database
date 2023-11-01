@@ -118,7 +118,7 @@ public class DBTest3 {
 
 		JPanel btnPanel = new JPanel(new FlowLayout());
 		JButton deleteBtn = new JButton("삭제");
-//        deleteBtn.addActionListener(e -> deleteSelectedEmployees(rangeComboBox, rangeDetailComboBox));
+        deleteBtn.addActionListener(e -> deleteSelectedEmployees(rangeComboBox, rangeDetailComboBox, salaryTextField));
 		btnPanel.add(deleteBtn);
 
 		JButton addBtn = new JButton("직원 추가");
@@ -309,54 +309,54 @@ public class DBTest3 {
 		}
 	}
 
-//    private static void deleteSelectedEmployees(JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox) {
-//        DefaultTableModel model = (DefaultTableModel) table.getModel();
-//
-//        for (int i = model.getRowCount() - 1; i >= 0; i--) {
-//            Boolean isChecked = (Boolean) model.getValueAt(i, 0);
-//
-//            if (isChecked) {
-//                String fname = (String) model.getValueAt(i, 1); // FNAME
-//                String fullName = fname; // FNAME 변수만 fullName 변수에 할당
-//                String ssn = (String) model.getValueAt(i, 2);
-//
-//                try (Connection connection = DriverManager.getConnection(url, user, password);
-//                     PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM EMPLOYEE WHERE Ssn = ?")) {
-//
-//                    // Get related employees
-//                    StringBuilder relatedEmployees = new StringBuilder();
-//                    try (PreparedStatement relatedStmt = connection.prepareStatement("SELECT Fname, Lname FROM EMPLOYEE WHERE Super_ssn = ?")) {
-//                        relatedStmt.setString(1, ssn);
-//                        ResultSet resultSet = relatedStmt.executeQuery();
-//                        while (resultSet.next()) {
-//                            relatedEmployees.append(resultSet.getString("Fname")).append(" ").append(resultSet.getString("Lname")).append(", ");
-//                        }
-//                    }
-//
-//                    preparedStatement.setString(1, ssn);
-//                    int rowsAffected = preparedStatement.executeUpdate();
-//                    if (rowsAffected > 0) {
-//                        model.removeRow(i);
-//                        searchEmployees((String) rangeComboBox.getSelectedItem(), (String) rangeDetailComboBox.getSelectedItem());
-//
-//                        String message = fullName + "'employee 가 삭제 됩니다..";
-//                        if (relatedEmployees.length() > 0) {
-//                            message += "\npk-fk로 관련되서 삭제되는 employee들: " + relatedEmployees.substring(0, relatedEmployees.length() - 2);
-//                        }
-//                        System.out.println(message);
-//
-//                        // GUI message
-//                        JOptionPane.showMessageDialog(jframe, message, "삭제 완료!", JOptionPane.INFORMATION_MESSAGE);
-//                    } else {
-//                        JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error", JOptionPane.ERROR_MESSAGE);
-//                    }
-//                }
-//                catch (SQLException e) {
-//                    e.printStackTrace();
-//                    JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error", JOptionPane.ERROR_MESSAGE);
-//                }
-//            }
-//        }
-//    }
+    private static void deleteSelectedEmployees(JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox, JTextField salaryTextField) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+
+        for (int i = model.getRowCount() - 1; i >= 0; i--) {
+            Boolean isChecked = (Boolean) model.getValueAt(i, 0);
+
+            if (isChecked) {
+                String fname = (String) model.getValueAt(i, 1); // FNAME
+                String fullName = fname; // FNAME 변수만 fullName 변수에 할당
+                String ssn = (String) model.getValueAt(i, 2);
+
+                try (Connection connection = DriverManager.getConnection(url, user, password);
+                     PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM EMPLOYEE WHERE Ssn = ?")) {
+
+                    // Get related employees
+                    StringBuilder relatedEmployees = new StringBuilder();
+                    try (PreparedStatement relatedStmt = connection.prepareStatement("SELECT Fname, Lname FROM EMPLOYEE WHERE Super_ssn = ?")) {
+                        relatedStmt.setString(1, ssn);
+                        ResultSet resultSet = relatedStmt.executeQuery();
+                        while (resultSet.next()) {
+                            relatedEmployees.append(resultSet.getString("Fname")).append(" ").append(resultSet.getString("Lname")).append(", ");
+                        }
+                    }
+
+                    preparedStatement.setString(1, ssn);
+                    int rowsAffected = preparedStatement.executeUpdate();
+                    if (rowsAffected > 0) {
+                        model.removeRow(i);
+                        searchEmployees((String) rangeComboBox.getSelectedItem(), (String) rangeDetailComboBox.getSelectedItem(), salaryTextField.getText());
+
+                        String message = fullName + "'employee 가 삭제 됩니다..";
+                        if (relatedEmployees.length() > 0) {
+                            message += "\npk-fk로 관련되서 삭제되는 employee들: " + relatedEmployees.substring(0, relatedEmployees.length() - 2);
+                        }
+                        System.out.println(message);
+
+                        // GUI message
+                        JOptionPane.showMessageDialog(jframe, message, "삭제 완료!", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+                catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
 
 }
