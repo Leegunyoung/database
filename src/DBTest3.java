@@ -111,10 +111,27 @@ public class DBTest3 {
 					salaryTextField.getText());
 		});
 		searchPanel2.add(searchBtn);
+
+
+		JButton minButton = new JButton("최솟값");
+		minButton.addActionListener(e -> {
+			double minSalary = getMinSalary();
+			JOptionPane.showMessageDialog(jframe, "최솟값: " + minSalary);
+		});
+		searchPanel2.add(minButton);
+
+		JButton maxButton = new JButton("최댓값");
+		maxButton.addActionListener(e -> {
+			double maxSalary = getMaxSalary();
+			JOptionPane.showMessageDialog(jframe, "최댓값: " + maxSalary);
+		});
+		searchPanel2.add(maxButton);
+
 		JPanel search = new JPanel(new GridLayout(2, 1));
 		search.add(searchPanel);
 		search.add(searchPanel2);
 		jframe.add(search, BorderLayout.NORTH);
+
 
 		JPanel btnPanel = new JPanel(new FlowLayout());
 		JButton deleteBtn = new JButton("삭제");
@@ -125,11 +142,38 @@ public class DBTest3 {
 		addBtn.addActionListener(e -> createAddEmployeeForm(conn)); // Call the method for adding an employee
 		btnPanel.add(addBtn);
 
+		JButton modifyBtn = new JButton("직원 수정");
+
+		modifyBtn.addActionListener(e -> {
+			int selectedRow = table.getSelectedRow();
+			if (selectedRow != -1) {
+				Object[][] selectedData = new Object[1][table.getColumnCount()];
+				for (int i = 0; i < table.getColumnCount(); i++) {
+					Object value = table.getValueAt(selectedRow, i);
+					if (value instanceof Double) {
+						selectedData[0][i] = String.valueOf(value);
+					} else {
+						selectedData[0][i] = value;
+					}
+				}
+				modifyEmployeeForm(conn, selectedData);
+				jframe.add(btnPanel, BorderLayout.SOUTH);
+				jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				jframe.setVisible(true);
+			} else {
+				System.out.println("바보");
+			}
+		});
+
+		btnPanel.add(modifyBtn);
+
+
 		jframe.add(btnPanel, BorderLayout.SOUTH);
 
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jframe.setVisible(true);
 	}
+
 
 	public static void addForeignKeyConstraintWithCascade(Connection conn) {
 		try (Statement stmt = conn.createStatement()) {
@@ -148,6 +192,57 @@ public class DBTest3 {
 		} catch (SQLException e) {
 			System.out.println("fk-pk가 이미 설정되어있으니까 추가하려면 쿼리문에 추가하시면 됩니당!");
 		}
+	}
+
+	private static String[] getMinSalaryAndEmployeeName() {
+		String[] minSalaryAndEmployee = new String[2]; // 인덱스 0: 최소 급여, 인덱스 1: 해당 급여를 받는 직원
+
+		try (Connection connection = DriverManager.getConnection(url, user, password);
+			 Statement statement = connection.createStatement()) {
+			String minQuery = "SELECT MIN(Salary) AS MinSalary, concat(E.fname, ' ', E.minit, ' ', E.lname) as Name " +
+					"FROM EMPLOYEE E";
+			ResultSet minResult = statement.executeQuery(minQuery);
+
+			if (minResult.next()) {
+				minSalaryAndEmployee[0] = String.valueOf(minResult.getDouble("MinSalary"));
+				minSalaryAndEmployee[1] = minResult.getString("Name");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return minSalaryAndEmployee;
+	}
+
+	private static double getMinSalary() {
+		double minSalary = 0.0;
+		try (Connection connection = DriverManager.getConnection(url, user, password);
+			 Statement statement = connection.createStatement()) {
+			String minQuery = "SELECT MIN(Salary) AS MinSalary FROM EMPLOYEE";
+			ResultSet minResult = statement.executeQuery(minQuery);
+
+			if (minResult.next()) {
+				minSalary = minResult.getDouble("MinSalary");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return minSalary;
+	}
+
+	private static double getMaxSalary() {
+		double maxSalary = 0.0;
+		try (Connection connection = DriverManager.getConnection(url, user, password);
+			 Statement statement = connection.createStatement()) {
+			String maxQuery = "SELECT MAX(Salary) AS MaxSalary FROM EMPLOYEE";
+			ResultSet maxResult = statement.executeQuery(maxQuery);
+
+			if (maxResult.next()) {
+				maxSalary = maxResult.getDouble("MaxSalary");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return maxSalary;
 	}
 
 	private static void searchEmployees(String range, String detail, String msal) {
@@ -344,8 +439,6 @@ public class DBTest3 {
 		JTextField DepartmentField = new JTextField();
 		addEmployeeFrame.add(DepartmentField);
 
-		// ... Add the rest of the fields
-
 		JButton addButton = new JButton("추가");
 		addButton.addActionListener(e -> {
 			String name = nameField.getText();
@@ -362,14 +455,9 @@ public class DBTest3 {
 			String Minit = nameParts.length > 2 ? nameParts[1] : ""; // Minit
 			String Lname = nameParts.length > 2 ? nameParts[2] : nameParts[1]; // Lname
 
-			// Extract values from other fields
-//            Integer ssn = Integer.parseInt(Ssn);
-//            Date bDate = Date.valueOf(Bdate); // Assuming bDateField is a date in "YYYY-MM-DD" format
-//            Double salary = Double.parseDouble(Salary);
-//            Integer supervisor = Integer.parseInt(Supervisor); // Assuming supervisor ID is an Integer
 
 			try {
-				insertEmployee(conn, Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor, Department);
+				insertEmployee( Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor, Department);
 			} catch (SQLException ex) {
 				throw new RuntimeException(ex);
 			}
@@ -383,7 +471,6 @@ public class DBTest3 {
 
 
 	private static void insertEmployee(
-			Connection conn,
 			String Fname,
 			String Minit,
 			String Lname,
@@ -402,7 +489,6 @@ public class DBTest3 {
 		try (PreparedStatement departmentPreparedStatement = connection.prepareStatement(departmentQuery)) {
 			departmentPreparedStatement.setString(1, Department); // Set the Department name at the first position
 			ResultSet departmentResultSet = departmentPreparedStatement.executeQuery();
-
 			if (departmentResultSet.next()) {
 				Dno = departmentResultSet.getString("Dnumber");
 				System.out.println(Department);
@@ -437,11 +523,6 @@ public class DBTest3 {
 			ex.printStackTrace();
 		}
 	}
-
-
-
-
-
 
 	private static void deleteSelectedEmployees(JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox, JTextField salaryTextField) {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
@@ -492,5 +573,122 @@ public class DBTest3 {
             }
         }
     }
+	private static void modifyEmployeeForm(Connection conn, Object[][] selectedData) {
+		JFrame modifyEmployeeFrame = new JFrame("직원 수정");
+		modifyEmployeeFrame.setLayout(new GridLayout(11, 2));
+
+		JTextField nameField = new JTextField((String) selectedData[0][1]);
+		modifyEmployeeFrame.add(nameField);
+
+		JTextField SsnField = new JTextField((String) selectedData[0][2]);
+		modifyEmployeeFrame.add(SsnField);
+
+		JTextField BdateField = new JTextField((String) selectedData[0][3]);
+		modifyEmployeeFrame.add(BdateField);
+
+		JTextField AddressField = new JTextField((String) selectedData[0][4]);
+		modifyEmployeeFrame.add(AddressField);
+
+		JTextField SexField = new JTextField((String) selectedData[0][5]);
+		modifyEmployeeFrame.add(SexField);
+
+		JTextField SalaryField = new JTextField((String) selectedData[0][6]);
+		modifyEmployeeFrame.add(SalaryField);
+
+		JTextField SupervisorField = new JTextField((String) selectedData[0][7]);
+		modifyEmployeeFrame.add(SupervisorField);
+
+		JTextField DepartmentField = new JTextField((String) selectedData[0][8]);
+		modifyEmployeeFrame.add(DepartmentField);
+
+
+		// ... Add the rest of the fields
+
+		JButton modifyButton = new JButton("수정");
+		modifyButton.addActionListener(e -> {
+			String name = nameField.getText();
+			String Ssn = SsnField.getText();
+			String Bdate = BdateField.getText();
+			String Address = AddressField.getText();
+			String Sex = SexField.getText();
+			String Salary = SalaryField.getText();
+			String  Supervisor = SupervisorField.getText();
+			String Department = DepartmentField.getText();
+
+			String[] nameParts = name.split(" ");
+			String Fname = nameParts[0]; // Fname에 해당
+			String Minit = nameParts.length > 2 ? nameParts[1] : ""; // Minit
+			String Lname = nameParts.length > 2 ? nameParts[2] : nameParts[1]; // Lname
+			List<String> selectedSSNs = new ArrayList<>();
+			selectedSSNs.add(Ssn); // Add the extracted SSN to the List
+
+
+
+			try {
+				modifyEmployee( conn, selectedSSNs,Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor, Department);
+			} catch (SQLException ex) {
+				throw new RuntimeException(ex);
+			}
+			modifyEmployeeFrame.dispose(); // Close the form
+		});
+		modifyEmployeeFrame.add(modifyButton);
+
+		modifyEmployeeFrame.setSize(400, 300);
+		modifyEmployeeFrame.setVisible(true);
+
+	}
+	private static void modifyEmployee(Connection conn, List<String> selectedSSNs, String Fname, String Minit, String Lname,String Ssn, String Bdate, String Address, String Sex, String Salary, String Super_ssn, String Department) throws SQLException {
+		String Dno = null;
+		Connection connection = DriverManager.getConnection(url, user, password);
+		String departmentQuery = "SELECT Dnumber FROM department WHERE Dname = ?";
+		try (PreparedStatement departmentPreparedStatement = connection.prepareStatement(departmentQuery)) {
+			departmentPreparedStatement.setString(1, Department); // Set the Department name at the first position
+			ResultSet departmentResultSet = departmentPreparedStatement.executeQuery();
+
+			if (departmentResultSet.next()) {
+				Dno = departmentResultSet.getString("Dnumber");
+				System.out.println(Department);
+			}
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+		}
+		String updateSql = "UPDATE EMPLOYEE SET Fname = ?, Minit = ?, Lname = ?, Ssn=?,Bdate = ?, Address = ?, Sex = ?, Salary = ?, Super_ssn = ?, Dno = ? WHERE Ssn = ?";
+		try (PreparedStatement updateStatement = connection.prepareStatement(updateSql)) {
+			for (String ssn : selectedSSNs) {
+				updateStatement.setString(1, Fname);
+				updateStatement.setString(2, Minit);
+				updateStatement.setString(3, Lname);
+				updateStatement.setString(4, Ssn);
+				updateStatement.setString(5, Bdate);
+				updateStatement.setString(6, Address);
+				updateStatement.setString(7, Sex);
+				updateStatement.setString(8, Salary);
+				updateStatement.setString(9, Super_ssn);
+				updateStatement.setString(10, Dno);
+				updateStatement.setString(11, ssn);
+
+
+				updateStatement.addBatch(); // Adding to batch for batch processing
+			}
+
+			int[] rowsAffected = updateStatement.executeBatch();
+			int totalRowsAffected = 0;
+			for (int rows : rowsAffected) {
+				totalRowsAffected += rows;
+			}
+
+			if (totalRowsAffected == selectedSSNs.size()) {
+				System.out.println("선택된 직원 정보가 성공적으로 수정되었습니다.");
+				// 성공 메시지 처리
+			} else {
+				System.out.println("직원 정보 수정에 실패했습니다.");
+				// 실패 메시지 처리
+			}
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			// 오류 처리
+		}
+	}
+
 
 }
