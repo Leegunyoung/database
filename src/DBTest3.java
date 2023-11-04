@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
@@ -6,29 +8,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DBTest3 {
-	private static final String url = "jdbc:mysql://localhost:3306/EMPLOYEE?serverTimeZone=UTC";
+	private static final String url = "jdbc:mysql://localhost:3306/company?serverTimeZone=UTC";
 	private static final String user = "root";
 	private static final String password = "1234";
 	private static JFrame jframe = new JFrame();
 	private static String[] rangeOptions = { "전체", "부서", "성별", "연봉" };
 	private static String[] addrangeOptions = { "전체", "부서", "성별", "연봉" };
-
 	private static boolean foreignKeyConstraintsAdded = false;
 	private static String[][] rangeOptionsDetail = { { "Research", "Administration", "Headquarters" }, { "M", "F" } };
-	private static String[][] addrangeOptionsDetail = { { "Research", "Administration", "Headquarters" }, { "M", "F" } };
-
-	private static JCheckBox op2 = new JCheckBox("Name", true);
-	private static JCheckBox op3 = new JCheckBox("Ssn", true);
-	private static JCheckBox op4 = new JCheckBox("Bdate", true);
-	private static JCheckBox op5 = new JCheckBox("Address", true);
-	private static JCheckBox op6 = new JCheckBox("Sex", true);
-	private static JCheckBox op7 = new JCheckBox("Salary", true);
-	private static JCheckBox op8 = new JCheckBox("Supervisor", true);
-	private static JCheckBox op9 = new JCheckBox("Department", true);
-
-
+	private static String[][] addrangeOptionsDetail = { { "Research", "Administration", "Headquarters" },
+			{ "M", "F" } };
+	private static JCheckBox op1 = new JCheckBox("Name", true);
+	private static JCheckBox op2 = new JCheckBox("Ssn", true);
+	private static JCheckBox op3 = new JCheckBox("Bdate", true);
+	private static JCheckBox op4 = new JCheckBox("Address", true);
+	private static JCheckBox op5 = new JCheckBox("Sex", true);
+	private static JCheckBox op6 = new JCheckBox("Salary", true);
+	private static JCheckBox op7 = new JCheckBox("Supervisor", true);
+	private static JCheckBox op8 = new JCheckBox("Department", true);
 	private static JTable table;
 	private static DefaultTableModel model;
+	private static JLabel selectedEmp = new JLabel("선택한 직원 : ");
+	private static JLabel selectedEmpNum = new JLabel("선택한 직원 수 : 0");
 
 	public static void main(String[] args) {
 		try (Connection conn = getConnection()) {
@@ -47,63 +48,48 @@ public class DBTest3 {
 		return DriverManager.getConnection(url, user, password);
 	}
 
-
-
 	private static void processUserRequests(Connection conn) {
 		jframe.setTitle("Employee Retrieve System");
 		jframe.setSize(1200, 800);
 		jframe.setLocationRelativeTo(null);
 		jframe.setResizable(false);
 		jframe.setLayout(new BorderLayout());
-		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		jframe.setVisible(true);
 
-		JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JPanel searchPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JPanel searchPanel2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JPanel searchPanel3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JComboBox<String> rangeComboBox = new JComboBox<>(rangeOptions);
 		JComboBox<String> rangeDetailComboBox = new JComboBox<>(rangeOptionsDetail[0]);
-		JTextField salaryTextField = new JTextField(10);
-
-		JPanel searchPanel3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		JPanel searchPanel4 = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		JComboBox<String> addrangeComboBox = new JComboBox<>(addrangeOptions);
 		JComboBox<String> addrangeDetailComboBox = new JComboBox<>(addrangeOptionsDetail[0]);
 		JTextField salaryTextField1 = new JTextField(10);
+		JTextField salaryTextField2 = new JTextField(10);
 
-
-
-		searchPanel.add(new JLabel("검색 범위:"));
-		searchPanel.add(rangeComboBox);
-		searchPanel.add(rangeDetailComboBox);
-		searchPanel.add(salaryTextField);
+		searchPanel1.add(new JLabel("검색 범위:"));
+		searchPanel1.add(rangeComboBox);
+		searchPanel1.add(rangeDetailComboBox);
+		searchPanel1.add(salaryTextField1);
 		rangeDetailComboBox.setEnabled(false);
 		rangeDetailComboBox.setVisible(false);
-		salaryTextField.setVisible(false);
-		searchPanel2.add(op2);
-		searchPanel2.add(op3);
-		searchPanel2.add(op4);
-		searchPanel2.add(op5);
-		searchPanel2.add(op6);
-		searchPanel2.add(op7);
-		searchPanel2.add(op8);
-		searchPanel2.add(op9);
+		salaryTextField1.setVisible(false);
 
-		searchPanel.add(new JLabel("추가 검색 범위:"));
-		searchPanel.add(addrangeComboBox);
-		searchPanel.add(addrangeDetailComboBox);
-		searchPanel.add(salaryTextField1);
+		searchPanel2.add(new JLabel("추가 검색 범위:"));
+		searchPanel2.add(addrangeComboBox);
+		searchPanel2.add(addrangeDetailComboBox);
+		searchPanel2.add(salaryTextField2);
 		addrangeDetailComboBox.setEnabled(false);
 		addrangeDetailComboBox.setVisible(false);
-		salaryTextField1.setVisible(false);
-		searchPanel2.add(op2);
-		searchPanel2.add(op3);
-		searchPanel2.add(op4);
-		searchPanel2.add(op5);
-		searchPanel2.add(op6);
-		searchPanel2.add(op7);
-		searchPanel2.add(op8);
-		searchPanel2.add(op9);
+		salaryTextField2.setVisible(false);
+		searchPanel2.setVisible(false);
 
+		searchPanel3.add(op1);
+		searchPanel3.add(op2);
+		searchPanel3.add(op3);
+		searchPanel3.add(op4);
+		searchPanel3.add(op5);
+		searchPanel3.add(op6);
+		searchPanel3.add(op7);
+		searchPanel3.add(op8);
 
 		rangeComboBox.addActionListener(e -> {
 			rangeDetailComboBox.removeAllItems();
@@ -111,29 +97,33 @@ public class DBTest3 {
 			case 0:
 				rangeDetailComboBox.setEnabled(false);
 				rangeDetailComboBox.setVisible(false);
-				salaryTextField.setVisible(false);
-				salaryTextField.setText("");
+				salaryTextField1.setVisible(false);
+				salaryTextField1.setText("");
+				searchPanel2.setVisible(false);
 				break;
 			case 1:
 				int idx1 = rangeComboBox.getSelectedIndex();
 				rangeDetailComboBox.setEnabled(true);
 				rangeDetailComboBox.setVisible(true);
-				salaryTextField.setVisible(false);
-				salaryTextField.setText("");
+				salaryTextField1.setVisible(false);
+				salaryTextField1.setText("");
 				rangeDetailComboBox.setModel(new DefaultComboBoxModel<>(rangeOptionsDetail[idx1 - 1]));
+				searchPanel2.setVisible(true);
 				break;
 			case 2:
 				int idx2 = rangeComboBox.getSelectedIndex();
 				rangeDetailComboBox.setEnabled(true);
 				rangeDetailComboBox.setVisible(true);
-				salaryTextField.setVisible(false);
-				salaryTextField.setText("");
+				salaryTextField1.setVisible(false);
+				salaryTextField1.setText("");
 				rangeDetailComboBox.setModel(new DefaultComboBoxModel<>(rangeOptionsDetail[idx2 - 1]));
+				searchPanel2.setVisible(true);
 				break;
 			case 3:
 				rangeDetailComboBox.setEnabled(false);
 				rangeDetailComboBox.setVisible(false);
-				salaryTextField.setVisible(true);
+				salaryTextField1.setVisible(true);
+				searchPanel2.setVisible(true);
 			default:
 				break;
 			}
@@ -142,92 +132,90 @@ public class DBTest3 {
 		addrangeComboBox.addActionListener(e -> {
 			addrangeDetailComboBox.removeAllItems();
 			switch (addrangeComboBox.getSelectedIndex()) {
-				case 0:
-					addrangeDetailComboBox.setEnabled(false);
-					addrangeDetailComboBox.setVisible(false);
-					salaryTextField1.setVisible(false);
-					salaryTextField1.setText("");
-					break;
-				case 1:
-					int idx1 = addrangeComboBox.getSelectedIndex();
-					addrangeDetailComboBox.setEnabled(true);
-					addrangeDetailComboBox.setVisible(true);
-					salaryTextField1.setVisible(false);
-					salaryTextField1.setText("");
-					addrangeDetailComboBox.setModel(new DefaultComboBoxModel<>(addrangeOptionsDetail[idx1 - 1]));
-					break;
-				case 2:
-					int idx2 = addrangeComboBox.getSelectedIndex();
-					addrangeDetailComboBox.setEnabled(true);
-					addrangeDetailComboBox.setVisible(true);
-					salaryTextField1.setVisible(false);
-					salaryTextField1.setText("");
-					addrangeDetailComboBox.setModel(new DefaultComboBoxModel<>(addrangeOptionsDetail[idx2 - 1]));
-					break;
-				case 3:
-					addrangeDetailComboBox.setEnabled(false);
-					addrangeDetailComboBox.setVisible(false);
-					salaryTextField1.setVisible(true);
-				default:
-					break;
+			case 0:
+				addrangeDetailComboBox.setEnabled(false);
+				addrangeDetailComboBox.setVisible(false);
+				salaryTextField2.setVisible(false);
+				salaryTextField2.setText("");
+				break;
+			case 1:
+				int idx1 = addrangeComboBox.getSelectedIndex();
+				addrangeDetailComboBox.setEnabled(true);
+				addrangeDetailComboBox.setVisible(true);
+				salaryTextField2.setVisible(false);
+				salaryTextField2.setText("");
+				addrangeDetailComboBox.setModel(new DefaultComboBoxModel<>(addrangeOptionsDetail[idx1 - 1]));
+				break;
+			case 2:
+				int idx2 = addrangeComboBox.getSelectedIndex();
+				addrangeDetailComboBox.setEnabled(true);
+				addrangeDetailComboBox.setVisible(true);
+				salaryTextField2.setVisible(false);
+				salaryTextField2.setText("");
+				addrangeDetailComboBox.setModel(new DefaultComboBoxModel<>(addrangeOptionsDetail[idx2 - 1]));
+				break;
+			case 3:
+				addrangeDetailComboBox.setEnabled(false);
+				addrangeDetailComboBox.setVisible(false);
+				salaryTextField2.setVisible(true);
+			default:
+				break;
 			}
 		});
 
-
-
 		JButton searchBtn = new JButton("검색");
 		searchBtn.addActionListener(e -> {
+			selectedEmpNum.setText("선택한 직원 수 : 0");
+			selectedEmp.setText("선택한 직원 : ");
 			searchEmployees((String) rangeComboBox.getSelectedItem(), (String) rangeDetailComboBox.getSelectedItem(),
-					salaryTextField.getText(), (String) addrangeComboBox.getSelectedItem(), (String) addrangeDetailComboBox.getSelectedItem(),
-					salaryTextField1.getText());
+					salaryTextField1.getText(), (String) addrangeComboBox.getSelectedItem(),
+					(String) addrangeDetailComboBox.getSelectedItem(), salaryTextField2.getText());
 		});
-		searchPanel2.add(searchBtn);
-
+		searchPanel3.add(searchBtn);
 
 		JButton minButton = new JButton("최솟값");
 		minButton.addActionListener(e -> {
 			String range = (String) rangeComboBox.getSelectedItem();
 			String detail = (String) rangeDetailComboBox.getSelectedItem();
-			String salary = salaryTextField.getText();
+			String salary = salaryTextField1.getText();
 			String addrange = (String) addrangeComboBox.getSelectedItem();
 			String adddetail = (String) addrangeDetailComboBox.getSelectedItem();
-			String addsalary = salaryTextField1.getText();
+			String addsalary = salaryTextField2.getText();
 			double minSalary = getMinSalary(range, detail, salary, addrange, adddetail, addsalary);
 			JOptionPane.showMessageDialog(jframe, "최솟값: " + minSalary);
 		});
-		searchPanel2.add(minButton);
-
+		searchPanel3.add(minButton);
 
 		JButton maxButton = new JButton("최댓값");
 		maxButton.addActionListener(e -> {
 			String range = (String) rangeComboBox.getSelectedItem();
 			String detail = (String) rangeDetailComboBox.getSelectedItem();
-			String salary = salaryTextField.getText();
+			String salary = salaryTextField1.getText();
 			String addrange = (String) addrangeComboBox.getSelectedItem();
 			String adddetail = (String) addrangeDetailComboBox.getSelectedItem();
-			String addsalary = salaryTextField1.getText();
+			String addsalary = salaryTextField2.getText();
 			double maxSalary = getMaxSalary(range, detail, salary, addrange, adddetail, addsalary);
 			JOptionPane.showMessageDialog(jframe, "최댓값: " + maxSalary);
 		});
-		searchPanel2.add(maxButton);
+		searchPanel3.add(maxButton);
 
-		JPanel search = new JPanel(new GridLayout(2, 1));
-		search.add(searchPanel);
-		search.add(searchPanel2);
-		jframe.add(search, BorderLayout.NORTH);
-
+		JPanel searchPanel = new JPanel(new GridLayout(2, 1));
+		searchPanel1.add(searchPanel2);
+		searchPanel.add(searchPanel1);
+		searchPanel.add(searchPanel3);
+		jframe.add(searchPanel, BorderLayout.NORTH);
 
 		JPanel btnPanel = new JPanel(new FlowLayout());
 		JButton deleteBtn = new JButton("삭제");
-        deleteBtn.addActionListener(e -> deleteSelectedEmployees(rangeComboBox, rangeDetailComboBox, salaryTextField, addrangeComboBox, addrangeDetailComboBox, salaryTextField1));
+		deleteBtn.addActionListener(e -> deleteSelectedEmployees(rangeComboBox, rangeDetailComboBox, salaryTextField1,
+				addrangeComboBox, addrangeDetailComboBox, salaryTextField2));
 		btnPanel.add(deleteBtn);
 
 		JButton addBtn = new JButton("직원 추가");
-		addBtn.addActionListener(e -> createAddEmployeeForm(conn)); // Call the method for adding an employee
+		addBtn.addActionListener(e -> createAddEmployeeForm(conn));
 		btnPanel.add(addBtn);
 
 		JButton modifyBtn = new JButton("직원 수정");
-
 		modifyBtn.addActionListener(e -> {
 			int selectedRow = table.getSelectedRow();
 			if (selectedRow != -1) {
@@ -245,22 +233,19 @@ public class DBTest3 {
 				jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				jframe.setVisible(true);
 			} else {
-				System.out.println("바보");
+				JOptionPane.showMessageDialog(jframe, "수정할 직원을 선택해 주세요.", "Warning", JOptionPane.WARNING_MESSAGE);
 			}
 		});
 
 		btnPanel.add(modifyBtn);
-
-
-		jframe.add(btnPanel, BorderLayout.SOUTH);
-
+		JPanel btmPanel = new JPanel(new GridLayout(3, 1));
+		btmPanel.add(selectedEmpNum);
+		btmPanel.add(selectedEmp);
+		btmPanel.add(btnPanel);
+		jframe.add(btmPanel, BorderLayout.SOUTH);
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jframe.setVisible(true);
 	}
-
-
-
-
 
 	public static void addForeignKeyConstraintWithCascade(Connection conn) {
 		try (Statement stmt = conn.createStatement()) {
@@ -281,30 +266,32 @@ public class DBTest3 {
 		}
 	}
 
-	private static String[] getMinSalaryAndEmployeeName() {
-		String[] minSalaryAndEmployee = new String[2]; // 인덱스 0: 최소 급여, 인덱스 1: 해당 급여를 받는 직원
+//	private static String[] getMinSalaryAndEmployeeName() {
+//		String[] minSalaryAndEmployee = new String[2]; // 인덱스 0: 최소 급여, 인덱스 1: 해당 급여를 받는 직원
+//
+//		try (Connection connection = DriverManager.getConnection(url, user, password);
+//				Statement statement = connection.createStatement()) {
+//			String minQuery = "SELECT MIN(Salary) AS MinSalary, concat(E.fname, ' ', E.minit, ' ', E.lname) as Name "
+//					+ "FROM EMPLOYEE E";
+//			ResultSet minResult = statement.executeQuery(minQuery);
+//
+//			if (minResult.next()) {
+//				minSalaryAndEmployee[0] = String.valueOf(minResult.getDouble("MinSalary"));
+//				minSalaryAndEmployee[1] = minResult.getString("Name");
+//			}
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//		}
+//		return minSalaryAndEmployee;
+//	}
 
-		try (Connection connection = DriverManager.getConnection(url, user, password);
-			 Statement statement = connection.createStatement()) {
-			String minQuery = "SELECT MIN(Salary) AS MinSalary, concat(E.fname, ' ', E.minit, ' ', E.lname) as Name " +
-					"FROM EMPLOYEE E";
-			ResultSet minResult = statement.executeQuery(minQuery);
-
-			if (minResult.next()) {
-				minSalaryAndEmployee[0] = String.valueOf(minResult.getDouble("MinSalary"));
-				minSalaryAndEmployee[1] = minResult.getString("Name");
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return minSalaryAndEmployee;
-	}
-	private static double getMinSalary(String range, String detail, String salary, String addrange, String adddetail, String addsalary) {
+	private static double getMinSalary(String range, String detail, String salary, String addrange, String adddetail,
+			String addsalary) {
 		double minSalary = 0.0;
 		try (Connection connection = DriverManager.getConnection(url, user, password);
-			 Statement statement = connection.createStatement()) {
-			StringBuilder minQuery = new StringBuilder("SELECT MIN(E.Salary) AS MinSalary FROM EMPLOYEE E, DEPARTMENT D");
-
+				Statement statement = connection.createStatement()) {
+			StringBuilder minQuery = new StringBuilder(
+					"SELECT MIN(E.Salary) AS MinSalary FROM EMPLOYEE E, DEPARTMENT D");
 			List<String> conditions = new ArrayList<>();
 			if ("부서".equals(range)) {
 				conditions.add("D.Dname = '" + detail + "'");
@@ -313,6 +300,7 @@ public class DBTest3 {
 			} else if ("연봉".equals(range) && !salary.isEmpty()) {
 				conditions.add("E.Salary > " + salary);
 			}
+
 			if ("부서".equals(addrange)) {
 				conditions.add("D.Dname = '" + adddetail + "'");
 			} else if ("성별".equals(addrange)) {
@@ -325,7 +313,6 @@ public class DBTest3 {
 				minQuery.append(" WHERE E.Dno = D.Dnumber AND ");
 				minQuery.append(String.join(" AND ", conditions));
 			}
-
 			ResultSet minResult = statement.executeQuery(minQuery.toString());
 
 			if (minResult.next()) {
@@ -337,13 +324,13 @@ public class DBTest3 {
 		return minSalary;
 	}
 
-	private static double getMaxSalary(String range, String detail, String salary, String addrange, String adddetail, String addsalary) {
+	private static double getMaxSalary(String range, String detail, String salary, String addrange, String adddetail,
+			String addsalary) {
 		double maxSalary = 0.0;
 		try (Connection connection = DriverManager.getConnection(url, user, password);
-			 Statement statement = connection.createStatement()) {
-
-			StringBuilder maxQuery = new StringBuilder("SELECT MAX(E.Salary) AS MaxSalary FROM EMPLOYEE E, DEPARTMENT D");
-
+				Statement statement = connection.createStatement()) {
+			StringBuilder maxQuery = new StringBuilder(
+					"SELECT MAX(E.Salary) AS MaxSalary FROM EMPLOYEE E, DEPARTMENT D");
 			List<String> conditions = new ArrayList<>();
 			if ("부서".equals(range)) {
 				conditions.add("D.Dname = '" + detail + "'");
@@ -357,12 +344,10 @@ public class DBTest3 {
 				conditions.add("E.Sex = '" + adddetail + "'");
 			}
 
-
 			if (!conditions.isEmpty()) {
 				maxQuery.append(" WHERE E.Dno = D.Dnumber AND ");
 				maxQuery.append(String.join(" AND ", conditions));
 			}
-
 			ResultSet maxResult = statement.executeQuery(maxQuery.toString());
 
 			if (maxResult.next()) {
@@ -374,7 +359,8 @@ public class DBTest3 {
 		return maxSalary;
 	}
 
-	private static void searchEmployees(String range, String detail, String msal, String addrange, String adddetail, String addmsal) {
+	private static void searchEmployees(String range, String detail, String msal, String addrange, String adddetail,
+			String addmsal) {
 		JPanel resultTable = new JPanel();
 		resultTable.removeAll();
 		resultTable.revalidate();
@@ -383,42 +369,42 @@ public class DBTest3 {
 		String query = "SELECT ";
 		boolean anySelected = false;
 
-		if (op2.isSelected()) {
+		if (op1.isSelected()) {
 			query += " concat(E.fname, ' ', E.minit, ' ', E.lname) as Name, ";
 			headerList.add("Name");
 			anySelected = true;
 		}
-		if (op3.isSelected()) {
+		if (op2.isSelected()) {
 			query += "E.ssn, ";
 			headerList.add("Ssn");
 			anySelected = true;
 		}
-		if (op4.isSelected()) {
+		if (op3.isSelected()) {
 			query += "E.bdate, ";
 			headerList.add("Bdate");
 			anySelected = true;
 		}
-		if (op5.isSelected()) {
+		if (op4.isSelected()) {
 			query += "E.address, ";
 			headerList.add("Address");
 			anySelected = true;
 		}
-		if (op6.isSelected()) {
+		if (op5.isSelected()) {
 			query += "E.sex, ";
 			headerList.add("Sex");
 			anySelected = true;
 		}
-		if (op7.isSelected()) {
+		if (op6.isSelected()) {
 			query += "E.salary, ";
 			headerList.add("Salary");
 			anySelected = true;
 		}
-		if (op8.isSelected()) {
+		if (op7.isSelected()) {
 			query += "E.super_ssn, ";
 			headerList.add("Supervisor");
 			anySelected = true;
 		}
-		if (op9.isSelected()) {
+		if (op8.isSelected()) {
 			query += "D.dname, ";
 			headerList.add("Department");
 			anySelected = true;
@@ -449,8 +435,6 @@ public class DBTest3 {
 			double dsal = Double.parseDouble(addmsal);
 			query += " AND Salary > '" + dsal + "'";
 		}
-
-
 
 		try (Connection connection = DriverManager.getConnection(url, user, password);
 				Statement statement = connection.createStatement()) {
@@ -489,35 +473,35 @@ public class DBTest3 {
 			while (resultSet.next()) {
 				List<Object> rowData = new ArrayList<>();
 				rowData.add(false);
-				if (op2.isSelected()) {
+				if (op1.isSelected()) {
 					name = resultSet.getString("Name");
 					rowData.add(name);
 				}
-				if (op3.isSelected()) {
+				if (op2.isSelected()) {
 					ssn = resultSet.getString("Ssn");
 					rowData.add(ssn);
 				}
-				if (op4.isSelected()) {
+				if (op3.isSelected()) {
 					bdate = resultSet.getDate("Bdate").toString();
 					rowData.add(bdate);
 				}
-				if (op5.isSelected()) {
+				if (op4.isSelected()) {
 					addr = resultSet.getString("Address");
 					rowData.add(addr);
 				}
-				if (op6.isSelected()) {
+				if (op5.isSelected()) {
 					sex = resultSet.getString("Sex");
 					rowData.add(sex);
 				}
-				if (op7.isSelected()) {
+				if (op6.isSelected()) {
 					salary = resultSet.getDouble("Salary");
 					rowData.add(salary);
 				}
-				if (op8.isSelected()) {
+				if (op7.isSelected()) {
 					super_emp = resultSet.getString("Super_ssn");
 					rowData.add(super_emp);
 				}
-				if (op9.isSelected()) {
+				if (op8.isSelected()) {
 					dept = resultSet.getString("Dname");
 					rowData.add(dept);
 				}
@@ -541,16 +525,37 @@ public class DBTest3 {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		table.getModel().addTableModelListener(new TableModelListener() {
+			@Override
+			public void tableChanged(TableModelEvent e) {
+				String empTxt = "선택한 직원 : ";
+				String numTxt = "선택한 직원 수 : ";
+				int cnt = 0;
+				if (e.getType() == TableModelEvent.UPDATE) {
+					for (int row = 0; row < model.getRowCount(); row++) {
+						boolean isChecked = (Boolean) model.getValueAt(row, 0);
+						String name = (String) model.getValueAt(row, 1);
+						if (isChecked) {
+							cnt += 1;
+							empTxt += name;
+							empTxt += ",  ";
+						}
+					}
+					numTxt += String.valueOf(cnt);
+					selectedEmpNum.setText(numTxt);
+					empTxt = empTxt.substring(0, empTxt.length() - 3);
+					selectedEmp.setText(empTxt);
+				}
+			}
+		});
 	}
-
-
 
 	private static void createAddEmployeeForm(Connection conn) {
 		JFrame addEmployeeFrame = new JFrame("직원 추가");
 		addEmployeeFrame.setLayout(new GridLayout(11, 2));
 
 		addEmployeeFrame.add(new JLabel("Name: "));
-		JTextField nameField = new JTextField(); // Name을 받을 필드
+		JTextField nameField = new JTextField();
 		addEmployeeFrame.add(nameField);
 
 		addEmployeeFrame.add(new JLabel("Ssn: "));
@@ -577,7 +582,6 @@ public class DBTest3 {
 		JTextField SupervisorField = new JTextField();
 		addEmployeeFrame.add(SupervisorField);
 
-
 		addEmployeeFrame.add(new JLabel("Department: "));
 		JTextField DepartmentField = new JTextField();
 		addEmployeeFrame.add(DepartmentField);
@@ -590,21 +594,19 @@ public class DBTest3 {
 			String Address = AddressField.getText();
 			String Sex = SexField.getText();
 			String Salary = SalaryField.getText();
-			String  Supervisor = SupervisorField.getText();
+			String Supervisor = SupervisorField.getText();
 			String Department = DepartmentField.getText();
-
 			String[] nameParts = name.split(" ");
-			String Fname = nameParts[0]; // Fname에 해당
-			String Minit = nameParts.length > 2 ? nameParts[1] : ""; // Minit
-			String Lname = nameParts.length > 2 ? nameParts[2] : nameParts[1]; // Lname
-
+			String Fname = nameParts[0];
+			String Minit = nameParts.length > 2 ? nameParts[1] : "";
+			String Lname = nameParts.length > 2 ? nameParts[2] : nameParts[1];
 
 			try {
-				insertEmployee( Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor, Department);
+				insertEmployee(Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor, Department);
 			} catch (SQLException ex) {
 				throw new RuntimeException(ex);
 			}
-			addEmployeeFrame.dispose(); // Close the form
+			addEmployeeFrame.dispose();
 		});
 		addEmployeeFrame.add(addButton);
 
@@ -612,25 +614,14 @@ public class DBTest3 {
 		addEmployeeFrame.setVisible(true);
 	}
 
-
-	private static void insertEmployee(
-			String Fname,
-			String Minit,
-			String Lname,
-			String Ssn,
-			String Bdate,
-			String Address,
-			String Sex,
-			String Salary,
-			String Super_ssn,
-			String Department
-	) throws SQLException {
-		String Dno = null; // Default value, assuming department IDs start from 1
+	private static void insertEmployee(String Fname, String Minit, String Lname, String Ssn, String Bdate,
+			String Address, String Sex, String Salary, String Super_ssn, String Department) throws SQLException {
+		String Dno = null;
 		System.out.println(Department);
 		Connection connection = DriverManager.getConnection(url, user, password);
 		String departmentQuery = "SELECT Dnumber FROM department WHERE Dname = ?";
 		try (PreparedStatement departmentPreparedStatement = connection.prepareStatement(departmentQuery)) {
-			departmentPreparedStatement.setString(1, Department); // Set the Department name at the first position
+			departmentPreparedStatement.setString(1, Department);
 			ResultSet departmentResultSet = departmentPreparedStatement.executeQuery();
 			if (departmentResultSet.next()) {
 				Dno = departmentResultSet.getString("Dnumber");
@@ -641,7 +632,8 @@ public class DBTest3 {
 		}
 
 		String insertSql = "INSERT INTO EMPLOYEE (Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Super_ssn, Dno) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		System.out.println("Values: " + Fname + ", " + Minit + ", " + Lname + ", " + Ssn +", " + Bdate +", " + Address +", " + Sex +", " + Salary +", " + Super_ssn + ", " + Dno); // 모든 값 출력
+		System.out.println("Values: " + Fname + ", " + Minit + ", " + Lname + ", " + Ssn + ", " + Bdate + ", " + Address
+				+ ", " + Sex + ", " + Salary + ", " + Super_ssn + ", " + Dno);
 
 		try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
 			insertStatement.setString(1, Fname);
@@ -654,72 +646,68 @@ public class DBTest3 {
 			insertStatement.setString(8, Salary);
 			insertStatement.setString(9, Super_ssn);
 			insertStatement.setString(10, Dno);
-
 			int rowsAffected = insertStatement.executeUpdate();
 			if (rowsAffected > 0) {
 				System.out.println("Employee added successfully.");
 			} else {
 				System.out.println("Failed to add employee.");
 			}
-
 		} catch (SQLException ex) {
 			ex.printStackTrace();
 		}
 	}
 
+	private static void deleteSelectedEmployees(JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox,
+			JTextField salaryTextField, JComboBox<String> addrangeComboBox, JComboBox<String> addrangeDetailComboBox,
+			JTextField salaryTextField1) {
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		for (int i = model.getRowCount() - 1; i >= 0; i--) {
+			Boolean isChecked = (Boolean) model.getValueAt(i, 0);
+			if (isChecked) {
+				String fname = (String) model.getValueAt(i, 1);
+				String fullName = fname;
+				String ssn = (String) model.getValueAt(i, 2);
+				try (Connection connection = DriverManager.getConnection(url, user, password);
+						PreparedStatement preparedStatement = connection
+								.prepareStatement("DELETE FROM EMPLOYEE WHERE Ssn = ?")) {
+					StringBuilder relatedEmployees = new StringBuilder();
+					try (PreparedStatement relatedStmt = connection
+							.prepareStatement("SELECT Fname, Lname FROM EMPLOYEE WHERE Super_ssn = ?")) {
+						relatedStmt.setString(1, ssn);
+						ResultSet resultSet = relatedStmt.executeQuery();
+						while (resultSet.next()) {
+							relatedEmployees.append(resultSet.getString("Fname")).append(" ")
+									.append(resultSet.getString("Lname")).append(", ");
+						}
+					}
+					preparedStatement.setString(1, ssn);
+					int rowsAffected = preparedStatement.executeUpdate();
+					if (rowsAffected > 0) {
+						model.removeRow(i);
+						searchEmployees((String) rangeComboBox.getSelectedItem(),
+								(String) rangeDetailComboBox.getSelectedItem(), salaryTextField.getText(),
+								(String) addrangeComboBox.getSelectedItem(),
+								(String) addrangeDetailComboBox.getSelectedItem(), salaryTextField1.getText());
+						String message = fullName + "'employee 가 삭제 됩니다..";
+						if (relatedEmployees.length() > 0) {
+							message += "\npk-fk로 관련되서 삭제되는 employee들: "
+									+ relatedEmployees.substring(0, relatedEmployees.length() - 2);
+						}
+						System.out.println(message);
+						JOptionPane.showMessageDialog(jframe, message, "삭제 완료!", JOptionPane.INFORMATION_MESSAGE);
+					} else {
+						JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error",
+								JOptionPane.ERROR_MESSAGE);
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+					JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error",
+							JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
+	}
 
-
-	private static void deleteSelectedEmployees(JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox, JTextField salaryTextField,
-												JComboBox<String> addrangeComboBox, JComboBox<String> addrangeDetailComboBox, JTextField salaryTextField1) {
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-
-        for (int i = model.getRowCount() - 1; i >= 0; i--) {
-            Boolean isChecked = (Boolean) model.getValueAt(i, 0);
-
-            if (isChecked) {
-                String fname = (String) model.getValueAt(i, 1); // FNAME
-                String fullName = fname;
-                String ssn = (String) model.getValueAt(i, 2);
-
-                try (Connection connection = DriverManager.getConnection(url, user, password);
-                     PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM EMPLOYEE WHERE Ssn = ?")) {
-
-                    // Get related employees
-                    StringBuilder relatedEmployees = new StringBuilder();
-                    try (PreparedStatement relatedStmt = connection.prepareStatement("SELECT Fname, Lname FROM EMPLOYEE WHERE Super_ssn = ?")) {
-                        relatedStmt.setString(1, ssn);
-                        ResultSet resultSet = relatedStmt.executeQuery();
-                        while (resultSet.next()) {
-                            relatedEmployees.append(resultSet.getString("Fname")).append(" ").append(resultSet.getString("Lname")).append(", ");
-                        }
-                    }
-
-                    preparedStatement.setString(1, ssn);
-                    int rowsAffected = preparedStatement.executeUpdate();
-                    if (rowsAffected > 0) {
-                        model.removeRow(i);
-                        searchEmployees((String) rangeComboBox.getSelectedItem(), (String) rangeDetailComboBox.getSelectedItem(), salaryTextField.getText(),
-								(String) addrangeComboBox.getSelectedItem(), (String) addrangeDetailComboBox.getSelectedItem(),	salaryTextField1.getText());
-
-                        String message = fullName + "'employee 가 삭제 됩니다..";
-                        if (relatedEmployees.length() > 0) {
-                            message += "\npk-fk로 관련되서 삭제되는 employee들: " + relatedEmployees.substring(0, relatedEmployees.length() - 2);
-                        }
-                        System.out.println(message);
-
-                        // GUI message
-                        JOptionPane.showMessageDialog(jframe, message, "삭제 완료!", JOptionPane.INFORMATION_MESSAGE);
-                    } else {
-                        JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error", JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-                catch (SQLException e) {
-                    e.printStackTrace();
-                    JOptionPane.showMessageDialog(jframe, "삭제를 다시 시도해보세요!", "Deletion Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
-    }
 	private static void modifyEmployeeForm(Connection conn, Object[][] selectedData) {
 		JFrame modifyEmployeeFrame = new JFrame("직원 수정");
 		modifyEmployeeFrame.setLayout(new GridLayout(11, 2));
@@ -748,9 +736,6 @@ public class DBTest3 {
 		JTextField DepartmentField = new JTextField((String) selectedData[0][8]);
 		modifyEmployeeFrame.add(DepartmentField);
 
-
-		// ... Add the rest of the fields
-
 		JButton modifyButton = new JButton("수정");
 		modifyButton.addActionListener(e -> {
 			String name = nameField.getText();
@@ -759,39 +744,36 @@ public class DBTest3 {
 			String Address = AddressField.getText();
 			String Sex = SexField.getText();
 			String Salary = SalaryField.getText();
-			String  Supervisor = SupervisorField.getText();
+			String Supervisor = SupervisorField.getText();
 			String Department = DepartmentField.getText();
-
 			String[] nameParts = name.split(" ");
-			String Fname = nameParts[0]; // Fname에 해당
-			String Minit = nameParts.length > 2 ? nameParts[1] : ""; // Minit
-			String Lname = nameParts.length > 2 ? nameParts[2] : nameParts[1]; // Lname
+			String Fname = nameParts[0];
+			String Minit = nameParts.length > 2 ? nameParts[1] : "";
+			String Lname = nameParts.length > 2 ? nameParts[2] : nameParts[1];
 			List<String> selectedSSNs = new ArrayList<>();
-			selectedSSNs.add(Ssn); // Add the extracted SSN to the List
-
-
-
+			selectedSSNs.add(Ssn);
 			try {
-				modifyEmployee( conn, selectedSSNs,Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor, Department);
+				modifyEmployee(conn, selectedSSNs, Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor,
+						Department);
 			} catch (SQLException ex) {
 				throw new RuntimeException(ex);
 			}
-			modifyEmployeeFrame.dispose(); // Close the form
+			modifyEmployeeFrame.dispose();
 		});
 		modifyEmployeeFrame.add(modifyButton);
-
 		modifyEmployeeFrame.setSize(400, 300);
 		modifyEmployeeFrame.setVisible(true);
-
 	}
-	private static void modifyEmployee(Connection conn, List<String> selectedSSNs, String Fname, String Minit, String Lname,String Ssn, String Bdate, String Address, String Sex, String Salary, String Super_ssn, String Department) throws SQLException {
+
+	private static void modifyEmployee(Connection conn, List<String> selectedSSNs, String Fname, String Minit,
+			String Lname, String Ssn, String Bdate, String Address, String Sex, String Salary, String Super_ssn,
+			String Department) throws SQLException {
 		String Dno = null;
 		Connection connection = DriverManager.getConnection(url, user, password);
 		String departmentQuery = "SELECT Dnumber FROM department WHERE Dname = ?";
 		try (PreparedStatement departmentPreparedStatement = connection.prepareStatement(departmentQuery)) {
-			departmentPreparedStatement.setString(1, Department); // Set the Department name at the first position
+			departmentPreparedStatement.setString(1, Department);
 			ResultSet departmentResultSet = departmentPreparedStatement.executeQuery();
-
 			if (departmentResultSet.next()) {
 				Dno = departmentResultSet.getString("Dnumber");
 				System.out.println(Department);
@@ -813,28 +795,20 @@ public class DBTest3 {
 				updateStatement.setString(9, Super_ssn);
 				updateStatement.setString(10, Dno);
 				updateStatement.setString(11, ssn);
-
-
-				updateStatement.addBatch(); // Adding to batch for batch processing
+				updateStatement.addBatch();
 			}
-
 			int[] rowsAffected = updateStatement.executeBatch();
 			int totalRowsAffected = 0;
 			for (int rows : rowsAffected) {
 				totalRowsAffected += rows;
 			}
-
 			if (totalRowsAffected == selectedSSNs.size()) {
-				System.out.println("선택된 직원 정보가 성공적으로 수정되었습니다.");
-				// 성공 메시지 처리
+				JOptionPane.showMessageDialog(jframe, "선택된 직원 정보가 성공적으로 수정되었습니다.", "수정 완료!", JOptionPane.INFORMATION_MESSAGE);
 			} else {
-				System.out.println("직원 정보 수정에 실패했습니다.");
-				// 실패 메시지 처리
+				JOptionPane.showMessageDialog(jframe, "수정에 실패했습니다.", "Error", JOptionPane.INFORMATION_MESSAGE);
 			}
 		} catch (SQLException ex) {
 			ex.printStackTrace();
-			// 오류 처리
 		}
 	}
-
 }
