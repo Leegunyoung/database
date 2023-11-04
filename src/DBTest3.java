@@ -188,20 +188,25 @@ public class DBTest3 {
 		minButton.addActionListener(e -> {
 			String range = (String) rangeComboBox.getSelectedItem();
 			String detail = (String) rangeDetailComboBox.getSelectedItem();
+			String salary = salaryTextField.getText();
 			String addrange = (String) addrangeComboBox.getSelectedItem();
 			String adddetail = (String) addrangeDetailComboBox.getSelectedItem();
-			double minSalary = getMinSalary(range, detail, addrange, adddetail);
+			String addsalary = salaryTextField1.getText();
+			double minSalary = getMinSalary(range, detail, salary, addrange, adddetail, addsalary);
 			JOptionPane.showMessageDialog(jframe, "최솟값: " + minSalary);
 		});
 		searchPanel2.add(minButton);
+
 
 		JButton maxButton = new JButton("최댓값");
 		maxButton.addActionListener(e -> {
 			String range = (String) rangeComboBox.getSelectedItem();
 			String detail = (String) rangeDetailComboBox.getSelectedItem();
+			String salary = salaryTextField.getText();
 			String addrange = (String) addrangeComboBox.getSelectedItem();
 			String adddetail = (String) addrangeDetailComboBox.getSelectedItem();
-			double maxSalary = getMaxSalary(range, detail, addrange, adddetail);
+			String addsalary = salaryTextField1.getText();
+			double maxSalary = getMaxSalary(range, detail, salary, addrange, adddetail, addsalary);
 			JOptionPane.showMessageDialog(jframe, "최댓값: " + maxSalary);
 		});
 		searchPanel2.add(maxButton);
@@ -294,8 +299,7 @@ public class DBTest3 {
 		}
 		return minSalaryAndEmployee;
 	}
-
-	private static double getMinSalary(String range, String detail, String addrange, String adddetail) {
+	private static double getMinSalary(String range, String detail, String salary, String addrange, String adddetail, String addsalary) {
 		double minSalary = 0.0;
 		try (Connection connection = DriverManager.getConnection(url, user, password);
 			 Statement statement = connection.createStatement()) {
@@ -306,11 +310,15 @@ public class DBTest3 {
 				conditions.add("D.Dname = '" + detail + "'");
 			} else if ("성별".equals(range)) {
 				conditions.add("E.Sex = '" + detail + "'");
+			} else if ("연봉".equals(range) && !salary.isEmpty()) {
+				conditions.add("E.Salary > " + salary);
 			}
 			if ("부서".equals(addrange)) {
 				conditions.add("D.Dname = '" + adddetail + "'");
 			} else if ("성별".equals(addrange)) {
 				conditions.add("E.Sex = '" + adddetail + "'");
+			} else if ("연봉".equals(addrange) && !addsalary.isEmpty()) {
+				conditions.add("E.Salary > " + addsalary);
 			}
 
 			if (!conditions.isEmpty()) {
@@ -329,7 +337,7 @@ public class DBTest3 {
 		return minSalary;
 	}
 
-	private static double getMaxSalary(String range, String detail, String addrange, String adddetail) {
+	private static double getMaxSalary(String range, String detail, String salary, String addrange, String adddetail, String addsalary) {
 		double maxSalary = 0.0;
 		try (Connection connection = DriverManager.getConnection(url, user, password);
 			 Statement statement = connection.createStatement()) {
@@ -342,11 +350,13 @@ public class DBTest3 {
 			} else if ("성별".equals(range)) {
 				conditions.add("E.Sex = '" + detail + "'");
 			}
+
 			if ("부서".equals(addrange)) {
 				conditions.add("D.Dname = '" + adddetail + "'");
 			} else if ("성별".equals(addrange)) {
 				conditions.add("E.Sex = '" + adddetail + "'");
 			}
+
 
 			if (!conditions.isEmpty()) {
 				maxQuery.append(" WHERE E.Dno = D.Dnumber AND ");
