@@ -588,28 +588,31 @@ public class DBTest3 {
 
 		JButton addButton = new JButton("추가");
 		addButton.addActionListener(e -> {
-			String name = nameField.getText();
-			String Ssn = SsnField.getText();
-			String Bdate = BdateField.getText();
-			String Address = AddressField.getText();
-			String Sex = SexField.getText();
-			String Salary = SalaryField.getText();
-			String Supervisor = SupervisorField.getText();
-			String Department = DepartmentField.getText();
-			String[] nameParts = name.split(" ");
-			String Fname = nameParts[0];
-			String Minit = nameParts.length > 2 ? nameParts[1] : "";
-			String Lname = nameParts.length > 2 ? nameParts[2] : nameParts[1];
-
-			try {
-				insertEmployee(Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor, Department);
-			} catch (SQLException ex) {
-				throw new RuntimeException(ex);
-			}
-			addEmployeeFrame.dispose();
+		    String name = nameField.getText();
+		    String Ssn = SsnField.getText();
+		    
+		    if (Ssn.length() == 9) {
+		        String Bdate = BdateField.getText();
+		        String Address = AddressField.getText();
+		        String Sex = SexField.getText();
+		        String Salary = SalaryField.getText();
+		        String Supervisor = SupervisorField.getText();
+		        String Department = DepartmentField.getText();
+		        String[] nameParts = name.split(" ");
+		        String Fname = nameParts[0];
+		        String Minit = nameParts.length > 2 ? nameParts[1] : "";
+		        String Lname = nameParts.length > 2 ? nameParts[2] : nameParts[1];
+		        try {
+		            insertEmployee(Fname, Minit, Lname, Ssn, Bdate, Address, Sex, Salary, Supervisor, Department);
+		        } catch (SQLException ex) {
+		            throw new RuntimeException(ex);
+		        }
+		        addEmployeeFrame.dispose();
+		    } else {
+		        JOptionPane.showMessageDialog(addEmployeeFrame, "SSN은 9자리여야 합니다.", "오류", JOptionPane.ERROR_MESSAGE);
+		    }
 		});
 		addEmployeeFrame.add(addButton);
-
 		addEmployeeFrame.setSize(400, 300);
 		addEmployeeFrame.setVisible(true);
 	}
