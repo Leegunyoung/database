@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DBTest3 {
-	private static final String url = "jdbc:mysql://localhost:3306/EMPLOYEE?serverTimeZone=UTC"; //?앞에 본인의 거 입력하시면됩니다.
+	private static final String url = "jdbc:mysql://localhost:3306/mydb?serverTimeZone=UTC"; //?앞에 본인의 거 입력하시면됩니다.
 	private static final String user = "root";    //본인의 db user정보를 입력해주시면 됩니다!
-	private static final String password = "1234";  //본인의 db password를 입력해주시면 됩니다!
+	private static final String password = "llgy88388!";  //본인의 db password를 입력해주시면 됩니다!
 	private static JFrame jframe = new JFrame();
 	private static String[] rangeOptions = { "전체", "부서", "성별", "연봉" };
 	private static String[] addrangeOptions = { "전체", "부서", "성별", "연봉" };
@@ -28,6 +28,7 @@ public class DBTest3 {
 	private static JCheckBox op8 = new JCheckBox("Department", true);
 	private static JTable table;
 	private static DefaultTableModel model;
+	private static JLabel selectedsentence = new JLabel("James E Borg는 보고서를 참고하셔서 pk-fk제약조건때문에 제일 마지막에 삭제해주세요!...");
 	private static JLabel selectedEmp = new JLabel("선택한 직원 : ");
 	private static JLabel selectedEmpNum = new JLabel("선택한 직원 수 : 0");
 
@@ -159,7 +160,9 @@ public class DBTest3 {
 		});
 
 		JButton searchBtn = new JButton("검색");
+
 		searchBtn.addActionListener(e -> {
+			selectedsentence.setText("James E Borg는 보고서를 참고하셔서 pk-fk제약조건때문에 제일 마지막에 삭제해주세요!...");
 			selectedEmpNum.setText("선택한 직원 수 : 0");
 			selectedEmp.setText("선택한 직원 : ");
 			System.out.println(salaryTextField2.getText() + " " + (String) addrangeDetailComboBox.getSelectedItem());
@@ -241,7 +244,8 @@ public class DBTest3 {
 		});
 
 		btnPanel.add(modifyBtn);
-		JPanel btmPanel = new JPanel(new GridLayout(3, 1));
+		JPanel btmPanel = new JPanel(new GridLayout(4, 1));
+		btmPanel.add(selectedsentence);
 		btmPanel.add(selectedEmpNum);
 		btmPanel.add(selectedEmp);
 		btmPanel.add(btnPanel);
