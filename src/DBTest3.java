@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DBTest3 {
-	private static final String url = "jdbc:mysql://localhost:3306/mydb?serverTimeZone=UTC";
-	private static final String user = "root";
-	private static final String password = "llgy88388!";
+	private static final String url = "jdbc:mysql://localhost:3306/EMPLOYEE?serverTimeZone=UTC"; //?앞에 본인의 거 입력하시면됩니다.
+	private static final String user = "root";    //본인의 db user정보를 입력해주시면 됩니다!
+	private static final String password = "1234";  //본인의 db password를 입력해주시면 됩니다!
 	private static JFrame jframe = new JFrame();
 	private static String[] rangeOptions = { "전체", "부서", "성별", "연봉" };
 	private static String[] addrangeOptions = { "전체", "부서", "성별", "연봉" };
@@ -43,11 +43,11 @@ public class DBTest3 {
 			e.printStackTrace();
 		}
 	}
-
+	//연결
 	private static Connection getConnection() throws SQLException {
 		return DriverManager.getConnection(url, user, password);
 	}
-
+	//user process 간단한 ui 만들고 추가 삭제 수정 등등의 버튼 넣어놓는 함수
 	private static void processUserRequests(Connection conn) {
 		jframe.setTitle("Employee Retrieve System");
 		jframe.setSize(1200, 800);
@@ -249,7 +249,7 @@ public class DBTest3 {
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jframe.setVisible(true);
 	}
-
+	//pk-fk 코드내에서 연결 설정
 	public static void addForeignKeyConstraintWithCascade(Connection conn) {
 		try (Statement stmt = conn.createStatement()) {
 			String[] queries = {
@@ -268,7 +268,7 @@ public class DBTest3 {
 			System.out.println("fk-pk가 이미 설정되어있으니까 추가하려면 쿼리문에 추가하시면 됩니당!");
 		}
 	}
-
+	//최솟값 구하기
 	private static double getMinSalary(String range, String detail, String salary, String addrange, String adddetail,
 									   String addsalary) {
 		double minSalary = 0.0;
@@ -307,7 +307,7 @@ public class DBTest3 {
 		}
 		return minSalary;
 	}
-
+	//최대값 구하기
 	private static double getMaxSalary(String range, String detail, String salary, String addrange, String adddetail,
 									   String addsalary) {
 		double maxSalary = 0.0;
@@ -342,7 +342,7 @@ public class DBTest3 {
 		}
 		return maxSalary;
 	}
-
+	//조건 검색
 	private static void searchEmployees(String range, String detail, String msal, String addrange, String adddetail,
 										String addmsal) {
 		System.out.println(range + " " + detail+ " " + msal+ " " + addrange);
@@ -534,7 +534,7 @@ public class DBTest3 {
 			}
 		});
 	}
-
+	//추가 폼
 	private static void createAddEmployeeForm(Connection conn, JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox,
 											  JTextField salaryTextField, JComboBox<String> addrangeComboBox, JComboBox<String> addrangeDetailComboBox,
 											  JTextField salaryTextField1) {
@@ -619,7 +619,7 @@ public class DBTest3 {
 		addEmployeeFrame.setSize(400, 300);
 		addEmployeeFrame.setVisible(true);
 	}
-
+	//insert 함수 (추가에서 포함한거)
 	private static void insertEmployee(String Fname, String Minit, String Lname, String Ssn, String Bdate,
 									   String Address, String Sex, String Salary, String Super_ssn, String Department) throws SQLException {
 		String Dno = null;
@@ -663,7 +663,7 @@ public class DBTest3 {
 			ex.printStackTrace();
 		}
 	}
-
+	//삭제 함수
 	private static void deleteSelectedEmployees(JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox,
 												JTextField salaryTextField, JComboBox<String> addrangeComboBox, JComboBox<String> addrangeDetailComboBox,
 												JTextField salaryTextField1) {
@@ -714,7 +714,7 @@ public class DBTest3 {
 			}
 		}
 	}
-
+	//수정폼(update 하는폼)
 	private static void modifyEmployeeForm(Connection conn, Object[][] selectedData, JComboBox<String> rangeComboBox, JComboBox<String> rangeDetailComboBox,
 										   JTextField salaryTextField, JComboBox<String> addrangeComboBox, JComboBox<String> addrangeDetailComboBox,
 										   JTextField salaryTextField1) {
@@ -781,7 +781,7 @@ public class DBTest3 {
 		modifyEmployeeFrame.setSize(400, 300);
 		modifyEmployeeFrame.setVisible(true);
 	}
-
+	//수정하는 함수
 	private static void modifyEmployee(Connection conn, List<String> selectedSSNs, String Fname, String Minit,
 									   String Lname, String Ssn, String Bdate, String Address, String Sex, String Salary, String Super_ssn,
 									   String Department) throws SQLException {
